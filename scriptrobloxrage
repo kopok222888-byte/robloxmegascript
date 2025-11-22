@@ -1,0 +1,65 @@
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+pcall(function()
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
+end)
+
+local Images = {
+	"rbxassetid://12888839268",
+	"rbxassetid://12888839018",
+	"rbxassetid://12888838701",
+	"rbxassetid://12888838701",
+}
+
+local FrameTime = 0.05
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "InstantKeyframeBackground"
+screenGui.IgnoreGuiInset = true
+screenGui.ResetOnSpawn = false
+screenGui.DisplayOrder = 999999
+screenGui.Parent = playerGui
+
+local image = Instance.new("ImageLabel")
+image.Name = "FullscreenImage"
+image.Size = UDim2.new(1, 0, 1, 0)
+image.Position = UDim2.new(0, 0, 0, 0)
+image.BorderSizePixel = 0
+image.BackgroundTransparency = 1
+image.ScaleType = Enum.ScaleType.Stretch
+image.ZIndex = 999998
+image.Parent = screenGui
+
+local topCover = Instance.new("Frame")
+topCover.Size = UDim2.new(1, 0, 0, 36)
+topCover.BackgroundColor3 = Color3.new(0, 0, 0)
+topCover.BorderSizePixel = 0
+topCover.ZIndex = 999999
+topCover.Parent = screenGui
+
+-- 🔊 СУПЕР ГРОМКИЙ ЗВУК + БЕСКОНЕЧНЫЙ ЛУП
+local sound = Instance.new("Sound")
+sound.SoundId = "rbxassetid://3930427585"
+sound.Volume = 10           -- МАКСИМАЛЬНАЯ громкость (выше нельзя в Roblox)
+sound.PlaybackSpeed = 1
+sound.Looped = true         -- ✔ повторяется бесконечно
+sound.Parent = playerGui
+sound:Play()
+
+spawn(function()
+	local index = 1
+	while true do
+		image.Image = Images[index]
+
+		index += 1
+		if index > #Images then
+			index = 1
+		end
+
+		task.wait(FrameTime)
+	end
+end)

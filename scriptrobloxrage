@@ -1,65 +1,135 @@
 local Players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
-
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
-pcall(function()
-	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
-end)
-
+------------------------------------------------------
+-- НАСТРОЙКИ
+------------------------------------------------------
+local LoadTime = 8 -- длительность загрузки в секундах
 local Images = {
-	"rbxassetid://12888839268",
-	"rbxassetid://12888839018",
-	"rbxassetid://12888838701",
-	"rbxassetid://12888838701",
+    "rbxassetid://12888839268",
+    "rbxassetid://12888839018",
+    "rbxassetid://12888838701",
+    "rbxassetid://12888838701"
+}
+local SoundId = "rbxassetid://3930427585"
+
+------------------------------------------------------
+-- СОЗДАНИЕ ЭКРАНА ЗАГРУЗКИ
+------------------------------------------------------
+local loadingGui = Instance.new("ScreenGui")
+loadingGui.IgnoreGuiInset = true
+loadingGui.ResetOnSpawn = false
+loadingGui.Parent = playerGui
+
+local bg = Instance.new("Frame")
+bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+bg.Size = UDim2.new(1, 0, 1, 0)
+bg.Parent = loadingGui
+
+local text = Instance.new("TextLabel")
+text.Size = UDim2.new(1, 0, 0, 80)
+text.Position = UDim2.new(0, 0, 0.4, 0)
+text.BackgroundTransparency = 1
+text.TextColor3 = Color3.fromRGB(255, 255, 255)
+text.Font = Enum.Font.GothamBold
+text.TextScaled = true
+text.Text = "Загрузка..."
+text.Parent = loadingGui
+
+local barBG = Instance.new("Frame")
+barBG.Size = UDim2.new(0.6, 0, 0, 10)
+barBG.Position = UDim2.new(0.2, 0, 0.55, 0)
+barBG.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+barBG.BorderSizePixel = 0
+barBG.Parent = loadingGui
+
+local barFill = Instance.new("Frame")
+barFill.Size = UDim2.new(0, 0, 1, 0)
+barFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+barFill.BorderSizePixel = 0
+barFill.Parent = barBG
+
+------------------------------------------------------
+-- КРАСИВЫЙ ПЛАВНЫЙ ПРОГРЕСС
+------------------------------------------------------
+local steps = {
+    "Инициализация...",
+    "Загрузка данных...",
+    "Подготовка окружения...",
+    "Завершение..."
 }
 
-local FrameTime = 0.05
+for i = 1, #steps do
+    text.Text = steps[i]
+    local segmentTime = LoadTime / #steps
+    local startTime = tick()
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "InstantKeyframeBackground"
-screenGui.IgnoreGuiInset = true
-screenGui.ResetOnSpawn = false
-screenGui.DisplayOrder = 999999
-screenGui.Parent = playerGui
+    while tick() - startTime < segmentTime do
+        local alpha = (tick() - startTime) / segmentTime
+        barFill.Size = UDim2.new((i - 1 + alpha) / #steps, 0, 1, 0)
+        task.wait()
+    end
+end
 
-local image = Instance.new("ImageLabel")
-image.Name = "FullscreenImage"
-image.Size = UDim2.new(1, 0, 1, 0)
-image.Position = UDim2.new(0, 0, 0, 0)
-image.BorderSizePixel = 0
-image.BackgroundTransparency = 1
-image.ScaleType = Enum.ScaleType.Stretch
-image.ZIndex = 999998
-image.Parent = screenGui
+barFill.Size = UDim2.new(1, 0, 1, 0)
 
-local topCover = Instance.new("Frame")
-topCover.Size = UDim2.new(1, 0, 0, 36)
-topCover.BackgroundColor3 = Color3.new(0, 0, 0)
-topCover.BorderSizePixel = 0
-topCover.ZIndex = 999999
-topCover.Parent = screenGui
+------------------------------------------------------
+-- СОЗДАНИЕ ОСНОВНОЙ GUI
+------------------------------------------------------
+local mainGui = Instance.new("ScreenGui")
+mainGui.IgnoreGuiInset = true
+mainGui.ResetOnSpawn = false
+mainGui.Parent = playerGui
 
--- 🔊 СУПЕР ГРОМКИЙ ЗВУК + БЕСКОНЕЧНЫЙ ЛУП
+local imgLabel = Instance.new("ImageLabel")
+imgLabel.Size = UDim2.new(1, 0, 1, 0)
+imgLabel.Position = UDim2.new(0, 0, 0, 0)
+imgLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+imgLabel.BorderSizePixel = 0
+imgLabel.Image = ""
+imgLabel.Parent = mainGui
+
+-- циклическая смена изображений
+task.spawn(function()
+    local i = 1
+    while true do
+        imgLabel.Image = Images[i]
+        i = i + 1
+        if i > #Images then i = 1 end
+        task.wait(0.05) -- быстрая жёсткая смена
+    end
+end)
+
+------------------------------------------------------
+-- ЗВУК
+------------------------------------------------------
 local sound = Instance.new("Sound")
-sound.SoundId = "rbxassetid://169664410"
-sound.Volume = 10           -- МАКСИМАЛЬНАЯ громкость (выше нельзя в Roblox)
-sound.PlaybackSpeed = 1
-sound.Looped = true         -- ✔ повторяется бесконечно
-sound.Parent = playerGui
+sound.SoundId = SoundId
+sound.Volume = 10
+sound.Looped = true
+sound.Parent = mainGui
 sound:Play()
 
-spawn(function()
-	local index = 1
-	while true do
-		image.Image = Images[index]
+------------------------------------------------------
+-- УЛЁТ В СТРАТОСФЕРУ
+------------------------------------------------------
+local function LaunchIntoStratosphere()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local root = char:WaitForChild("HumanoidRootPart")
 
-		index += 1
-		if index > #Images then
-			index = 1
-		end
+    local bv = Instance.new("BodyVelocity")
+    bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    bv.Velocity = Vector3.new(0, 350, 0)
+    bv.Parent = root
 
-		task.wait(FrameTime)
-	end
-end)
+    task.delay(10, function()
+        if bv then bv:Destroy() end
+    end)
+end
+
+------------------------------------------------------
+-- ФИНАЛ: УДАЛЯЕМ ЗАГРУЗКУ И ВЗЛЕТАЕМ
+------------------------------------------------------
+loadingGui:Destroy()
+LaunchIntoStratosphere()
